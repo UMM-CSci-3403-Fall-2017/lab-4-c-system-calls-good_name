@@ -57,22 +57,53 @@ void disemvowel(FILE* inputFile, FILE* outputFile) {
 	
 	//loop until end of file, reading input buffer and writing
 	//disemvoweled version to output buffer
-	while(!feof(inputFile)){
+	for(;;){	
 		num_in = fread((void *) in_buf, sizeof(char), BUF_SIZE, inputFile);
 		num_out = copy_non_vowels(num_in, in_buf, out_buf);
 		fwrite(out_buf,sizeof(char), num_out, outputFile);
+		//check if you need to loop again
+		if(num_in < BUF_SIZE)
+			//check for end of file
+			if(feof(inputFile)){
+				break;
+			}
 	}	
 }
 
 int main(int argc, char *argv[]) {
-	FILE *inputFile;  
-	FILE *outputFile;
+	FILE* inputFile;  
+	FILE* outputFile;
 	
-	inputFile = fopen("in.txt", "r+");
-	outputFile = fopen("test_out.txt", "w+");
-
-	disemvowel(inputFile, outputFile);
+	//check for improper arguments
+	if(argc > 3){
 		
+		printf("too many arguments");
+		return 1;
+	
+	//case one: read from a file, write to standard output	
+	} else if(argc==2){
+		
+		inputFile = fopen(argv[1], "r+");
+		outputFile = stdout;
+
+	//case two: read from a file, write to a file
+	} else if(argc==3){
+		
+		inputFile = fopen(argv[1], "r+");
+		outputFile = fopen(argv[2], "w+");
+	
+	//case three: read standard input, write to standard output	
+	} else {
+		
+		inputFile = stdin;
+		outputFile = stdout;
+	}
+		
+	//run sub-function
+	disemvowel(inputFile, outputFile);
+	
+	//close streams
+	fflush(stdout);	
 	fclose(inputFile);
 	fclose(outputFile);
 
