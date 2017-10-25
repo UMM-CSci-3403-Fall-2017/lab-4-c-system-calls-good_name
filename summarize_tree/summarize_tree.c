@@ -16,7 +16,20 @@ bool is_dir(const char* path) {
    * return value from stat in case there is a problem, e.g., maybe the
    * the file doesn't actually exist.
    */
+       	struct stat *buf = malloc(1024*sizeof(int));
+        int stat_val;
+        stat_val = stat(path, buf);
+
+        if(stat_val == 0){
+                if(S_ISDIR(buf->st_mode)){
+                        free(buf);
+                        return true;
+                }
+        }
+        free(buf);
+        return false;
 }
+
 
 /* 
  * I needed this because the multiple recursion means there's no way to
@@ -36,12 +49,31 @@ void process_directory(const char* path) {
    * with a matching call to chdir() to move back out of it when you're
    * done.
    */
+	DIR *dir;
+        struct dirent *sub_d;
+
+        num_dirs++;
+
+        dir = opendir(path);
+        chdir(path);
+        sub_d=readdir(dir);
+
+        while(sub_d != NULL){
+               if(strcmp(sub_d->d_name,".")!=0 && strcmp(sub_d->d_name,"..")!=0){
+                        process_path(sub_d->d_name);
+                }
+        sub_d=readdir(dir);
+        }
+        closedir(dir);
+        chdir("..");
 }
 
 void process_file(const char* path) {
   /*
    * Update the number of regular files.
    */
+
+	num_regular++;
 }
 
 void process_path(const char* path) {
