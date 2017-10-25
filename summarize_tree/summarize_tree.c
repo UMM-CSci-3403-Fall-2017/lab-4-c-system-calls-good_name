@@ -9,74 +9,63 @@
 static int num_dirs, num_regular;
 
 bool is_dir(const char* path) {
-  /*
-   * Use the stat() function (try "man 2 stat") to determine if the file
-   * referenced by path is a directory or not.  Call stat, and then use
-   * S_ISDIR to see if the file is a directory. Make sure you check the
-   * return value from stat in case there is a problem, e.g., maybe the
-   * the file doesn't actually exist.
-   */
-       	struct stat *buf = malloc(1024*sizeof(int));
+	//allocate memory for a buffer and us it to store stat info
+	struct stat *buf = malloc(1024*sizeof(int));
         int stat_val;
         stat_val = stat(path, buf);
 
+	//check for successful stat call
         if(stat_val == 0){
+		//free allocated memory and return true if path is a directory
                 if(S_ISDIR(buf->st_mode)){
                         free(buf);
                         return true;
                 }
         }
-        free(buf);
+
+        //free allocated memory and return false
+	free(buf);
         return false;
 }
 
-
-/* 
- * I needed this because the multiple recursion means there's no way to
- * order them so that the definitions all precede the cause.
- */
+//initialize sub function for use in recursion
 void process_path(const char*);
 
 void process_directory(const char* path) {
-  /*
-   * Update the number of directories seen, use opendir() to open the
-   * directory, and then use readdir() to loop through the entries
-   * and process them. You have to be careful not to process the
-   * "." and ".." directory entries, or you'll end up spinning in
-   * (infinite) loops. Also make sure you closedir() when you're done.
-   *
-   * You'll also want to use chdir() to move into this new directory,
-   * with a matching call to chdir() to move back out of it when you're
-   * done.
-   */
+	//initialize vars
 	DIR *dir;
         struct dirent *sub_d;
-
+	
+	//increment directory count
         num_dirs++;
-
+	
+	//open working directory and store info about current entry in dirent struct
         dir = opendir(path);
         chdir(path);
         sub_d=readdir(dir);
 
+	//while sub directories+files exist, recursively iterate through file hierarchy
         while(sub_d != NULL){
-               if(strcmp(sub_d->d_name,".")!=0 && strcmp(sub_d->d_name,"..")!=0){
-                        process_path(sub_d->d_name);
+		//check for infinite loop condition
+        	if(strcmp(sub_d->d_name,".")!=0 && strcmp(sub_d->d_name,"..")!=0){
+                        //make recursive call
+			process_path(sub_d->d_name);
                 }
         sub_d=readdir(dir);
         }
+	
+	//close directory and navigate up file tree
         closedir(dir);
         chdir("..");
 }
 
 void process_file(const char* path) {
-  /*
-   * Update the number of regular files.
-   */
-
+	//increment file count
 	num_regular++;
 }
 
 void process_path(const char* path) {
+  //call appropriate subfunction depending on path filetype
   if (is_dir(path)) {
     process_directory(path);
   } else {
@@ -94,9 +83,11 @@ int main (int argc, char *argv[]) {
 
   num_dirs = 0;
   num_regular = 0;
-
+  
+  //call subfunction
   process_path(argv[1]);
 
+  //print counts
   printf("There were %d directories.\n", num_dirs);
   printf("There were %d regular files.\n", num_regular);
 
